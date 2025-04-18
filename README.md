@@ -2,6 +2,8 @@
 
 Uma aplicação simples para **encode**, **decode** e **edição** de tokens JWT diretamente no navegador
 
+Site: https://5kr1pt.github.io/jwt-playground/
+
 ---
 
 ## 🚀 Features
@@ -12,6 +14,11 @@ Uma aplicação simples para **encode**, **decode** e **edição** de tokens JWT
 - **Batch set**: ajuste claims via comandos rápidos (ex: `sub=1 role=admin`).
 - **Refresh times**: renova automaticamente `iat`, `nbf` e `exp` com lifetime configurável.
 - **Modos JSON & Raw**: escolha trabalhar com JSON legível ou Base64URL "raw".
+
+---
+## 📽️ How to use
+
+[![Demonstração do JWT Wizard](https://img.youtube.com/vi/TwRoaJMwru0/hqdefault.jpg)](https://youtu.be/TwRoaJMwru0)
 
 ---
 
