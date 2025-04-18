@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JWT Playground – Encode/Decode</title>
+    <!-- Tailwind via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Crypto‑JS for HS signing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js" defer></script>
+  </head>
+  <body class="bg-zinc-900 text-zinc-100 min-h-screen flex flex-col p-4 gap-6">
+    <header class="text-center">
+      <h1 class="text-4xl font-bold mb-1">JWT Playground by Krpt</h1>
+      <p class="text-sm text-zinc-400">
+        Encode, decode, editar claims e renovar tempos – tudo localmente.
+      </p>
+    </header>
+
+    <main class="grid lg:grid-cols-2 gap-6 flex-1">
+      <!-- Decode Card -->
+      <section class="bg-zinc-800 rounded-2xl shadow-lg p-6 flex flex-col gap-4">
+        <h2 class="text-xl font-semibold flex items-center gap-2">Decode</h2>
+        <textarea id="tokenInput" placeholder="Cole aqui seu JWT…" class="w-full bg-zinc-900 rounded-xl p-3 text-sm font-mono resize-y focus:outline-none focus:ring-2 focus:ring-lime-500" rows="4"></textarea>
+        <button class="bg-lime-600 hover:bg-lime-700 rounded-xl py-2 font-semibold" onclick="decodeToken()">Decodificar</button>
+
+        <div class="grid md:grid-cols-2 gap-4">
+          <div>
+            <label class="text-zinc-400 text-xs">Header (JSON)</label>
+            <textarea id="headerOut" readonly class="w-full bg-zinc-900 rounded-xl p-3 text-xs font-mono resize-y" rows="6"></textarea>
+          </div>
+          <div>
+            <label class="text-zinc-400 text-xs">Payload (JSON)</label>
+            <textarea id="payloadOut" readonly class="w-full bg-zinc-900 rounded-xl p-3 text-xs font-mono resize-y" rows="6"></textarea>
+          </div>
+        </div>
+        <div>
+          <label class="text-zinc-400 text-xs">Assinatura (base64url)</label>
+          <input id="signatureOut" readonly class="w-full bg-zinc-900 rounded-xl p-3 text-xs font-mono" />
+        </div>
+        <div class="flex gap-2">
+          <button class="bg-indigo-600 hover:bg-indigo-700 rounded-xl py-1 px-3 text-sm" onclick="cloneJson()">Clone JSON → Encode</button>
+          <button class="bg-indigo-600 hover:bg-indigo-700 rounded-xl py-1 px-3 text-sm" onclick="cloneRaw()">Clone Raw → Encode</button>
+        </div>
+      </section>
+
+      <!-- Encode Card -->
+      <section class="bg-zinc-800 rounded-2xl shadow-lg p-6 flex flex-col gap-4">
+        <h2 class="text-xl font-semibold flex items-center gap-2">Encode / Sign</h2>
+
+        <!-- Mode Toggle -->
+        <div class="flex items-center gap-4">
+          <label><input type="radio" name="mode" value="json" checked onchange="setMode('json')" /> JSON</label>
+          <label><input type="radio" name="mode" value="raw" onchange="setMode('raw')" /> Raw</label>
+        </div>
+
+        <!-- JSON Inputs -->
+        <div id="jsonInputs" class="grid md:grid-cols-2 gap-4">
+          <div>
+            <label class="text-zinc-400 text-xs">Header (JSON)</label>
+            <textarea id="headerIn" class="w-full bg-zinc-900 rounded-xl p-3 text-xs font-mono resize-y focus:outline-none" rows="6" placeholder='{"alg":"HS256","typ":"JWT"}'></textarea>
+          </div>
+          <div>
+            <label class="text-zinc-400 text-xs">Payload (JSON)</label>
+            <textarea id="payloadIn" class="w-full bg-zinc-900 rounded-xl p-3 text-xs font-mono resize-y focus:outline-none" rows="6" placeholder='{"sub":"123","iat":...}'></textarea>
+          </div>
+        </div>
+        <!-- Raw Inputs -->
+        <div id="rawInputs" class="grid md:grid-cols-2 gap-4 hidden">
+          <div>
+            <label class="text-zinc-400 text-xs">Header (Base64URL)</label>
+            <textarea id="headerRawIn" class="w-full bg-zinc-900 rounded-xl p-3 text-xs font-mono resize-y" rows="2"></textarea>
+          </div>
+          <div>
+            <label class="text-zinc-400 text-xs">Payload (Base64URL)</label>
+            <textarea id="payloadRawIn" class="w-full bg-zinc-900 rounded-xl p-3 text-xs font-mono resize-y" rows="2"></textarea>
+          </div>
+        </div>
+
+        <!-- Secret and Actions -->
+        <div class="grid md:grid-cols-2 gap-4 items-end">
+          <div>
+            <label class="text-zinc-400 text-xs">Segredo (HS256)</label>
+            <input id="secretIn" type="password" class="w-full bg-zinc-900 rounded-xl p-3 text-sm font-mono focus:outline-none" placeholder="opcional – vazio → none" />
+          </div>
+          <button class="bg-indigo-600 hover:bg-indigo-700 rounded-xl py-2 font-semibold" onclick="encodeToken()">Gerar JWT</button>
+        </div>
+
+        <!-- Batch set claims & refresh times -->
+        <div class="flex flex-col gap-2">
+          <div class="flex gap-2">
+            <input id="setInput" class="flex-1 bg-zinc-900 rounded-xl p-2 text-sm font-mono" placeholder="sub=1 role=admin (space-separated)" />
+            <button class="bg-indigo-600 hover:bg-indigo-700 rounded-xl py-1 px-3 text-sm" onclick="applySets()">Aplicar</button>
+          </div>
+          <div class="flex gap-2 items-center">
+            <input id="lifetimeIn" type="number" class="bg-zinc-900 rounded-xl p-2 text-sm font-mono w-24" value="3600" />
+            <span class="text-xs text-zinc-400">lifetime (segundos)</span>
+            <button class="bg-indigo-600 hover:bg-indigo-700 rounded-xl py-1 px-3 text-sm" onclick="applyRefresh()">Refresh times</button>
+          </div>
+        </div>
+
+        <!-- Output -->
+        <label class="text-zinc-400 text-xs">Token gerado</label>
+        <textarea id="tokenOut" readonly class="w-full bg-zinc-900 rounded-xl p-3 text-sm font-mono resize-y" rows="4"></textarea>
+      </section>
+    </main>
+
+    <footer class="text-center text-xs text-zinc-500">
+      Feito para estudos de segurança ofensiva · Tudo roda localmente ·
+      <a href="https://github.com/5kr1pt/jwt-playground" target="_blank" class="underline">GitHub</a>
+    </footer>
+
+    <script>
+      // Utils base64url -----------------------------------------------------------
+      const b64UrlDecode = str => {
+        str = str.replace(/-/g, '+').replace(/_/g, '/');
+        while (str.length % 4) str += '=';
+        try { return decodeURIComponent(atob(str).split('').map(c=>'%'+('00'+c.charCodeAt(0).toString(16)).slice(-2)).join('')); }
+        catch { return null; }
+      };
+      const b64UrlEncode = str => {
+        return btoa(unescape(encodeURIComponent(str))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+      };
+
+      // State ---------------------------------------------------------------------
+      let originalHeaderJson = '', originalPayloadJson = '';
+      let originalHeaderB64 = '', originalPayloadB64 = '';
+      let encodeMode = 'json';
+
+      // Mode switch ----------------------------------------------------------------
+      function setMode(m) {
+        encodeMode = m;
+        document.getElementById('jsonInputs').classList.toggle('hidden', m!=='json');
+        document.getElementById('rawInputs').classList.toggle('hidden', m!=='raw');
+      }
+
+      // Decode --------------------------------------------------------------------
+      function decodeToken() {
+        const input = document.getElementById('tokenInput').value.trim();
+        const parts = input.split('.');
+        if (parts.length < 2) return alert('Token inválido');
+        const [h, p, s] = parts;
+        originalHeaderB64 = h; originalPayloadB64 = p;
+        const hJson = b64UrlDecode(h), pJson = b64UrlDecode(p);
+        originalHeaderJson = hJson; originalPayloadJson = pJson;
+        // preencher decode
+        try { document.getElementById('headerOut').value = JSON.stringify(JSON.parse(hJson), null,2); } catch { document.getElementById('headerOut').value='JSON inválido'; }
+        try { document.getElementById('payloadOut').value = JSON.stringify(JSON.parse(pJson), null,2); } catch { document.getElementById('payloadOut').value='JSON inválido'; }
+        document.getElementById('signatureOut').value = s||'';
+      }
+
+      // Clone to encode -------------------------------------------------------------
+      function cloneJson() {
+        if (!originalHeaderJson) return;
+        document.getElementById('headerIn').value = JSON.stringify(JSON.parse(originalHeaderJson), null,2);
+        document.getElementById('payloadIn').value = JSON.stringify(JSON.parse(originalPayloadJson), null,2);
+        setMode('json');
+      }
+      function cloneRaw() {
+        if (!originalHeaderB64) return;
+        document.getElementById('headerRawIn').value = originalHeaderB64;
+        document.getElementById('payloadRawIn').value = originalPayloadB64;
+        setMode('raw');
+      }
+
+      // Apply sets -----------------------------------------------------------------
+      function applySets() {
+        const inp = document.getElementById('setInput').value.trim();
+        if (!inp) return;
+        let payload;
+        try {
+          payload = encodeMode==='json'
+            ? JSON.parse(document.getElementById('payloadIn').value)
+            : JSON.parse(b64UrlDecode(originalPayloadB64));
+        } catch { return alert('Payload JSON inválido'); }
+        inp.split(/\s+/).forEach(pair => {
+          const [k,v] = pair.split('='); if (k) payload[k]=v;
+        });
+        if (encodeMode==='json') document.getElementById('payloadIn').value = JSON.stringify(payload,null,2);
+        else document.getElementById('payloadRawIn').value = b64UrlEncode(JSON.stringify(payload));
+      }
+
+      // Refresh times ----------------------------------------------------------------
+      function applyRefresh() {
+        let payload;
+        try { payload = JSON.parse(document.getElementById('payloadIn').value); } catch { return alert('Payload JSON inválido'); }
+        const now = Math.floor(Date.now()/1000);
+        const lt = parseInt(document.getElementById('lifetimeIn').value) || 3600;
+        payload.iat = now; payload.nbf = now; payload.exp = now+lt;
+        document.getElementById('payloadIn').value = JSON.stringify(payload,null,2);
+      }
+
+      // Encode/sign ------------------------------------------------------------------
+      function encodeToken() {
+        const secret = document.getElementById('secretIn').value;
+        const alg = (() => { try { return JSON.parse(document.getElementById('headerIn').value).alg; } catch { return 'none'; } })();
+        let headerB64, payloadB64;
+        if (encodeMode==='raw') {
+          headerB64 = document.getElementById('headerRawIn').value.trim();
+          payloadB64 = document.getElementById('payloadRawIn').value.trim();
+        } else {
+          let h,p;
+          try { h = JSON.stringify(JSON.parse(document.getElementById('headerIn').value)); }
+          catch { return alert('Header JSON inválido'); }
+          try { p = JSON.stringify(JSON.parse(document.getElementById('payloadIn').value)); }
+          catch { return alert('Payload JSON inválido'); }
+          headerB64 = b64UrlEncode(h); payloadB64 = b64UrlEncode(p);
+        }
+        const unsigned = `${headerB64}.${payloadB64}`;
+        let sig = '';
+        if (alg!=='none' && secret) {
+          if (alg==='HS256') {
+            const hash = CryptoJS.HmacSHA256(unsigned, secret);
+            sig = b64UrlEncode(hash.toString(CryptoJS.enc.Base64));
+          } else return alert(`Algoritmo '${alg}' não suportado`);
+        }
+        const tok = sig ? `${unsigned}.${sig}` : unsigned + '.';
+        document.getElementById('tokenOut').value = tok;
+      }
+    </script>
+  </body>
+</html>
