@@ -1,5 +1,30 @@
 # JWT Playground
 
+---
+
+## ⚠️ Aviso de Segurança
+
+Esta aplicação web permite **criar, modificar e inspecionar JWTs manualmente**, inclusive com opções que **burlam as validações padrão de segurança**, como:
+- Gerar tokens com algoritmo `"none"` (sem assinatura)
+- Modificar manualmente os tempos (`iat`, `nbf`, `exp`)
+- Editar qualquer claim livremente, sem verificação de integridade
+
+**IMPORTANTE:**  
+Esta ferramenta foi criada **exclusivamente para fins educacionais**, como:
+- Testes em laboratório (labs, CTFs)
+- Estudo de vulnerabilidades comuns em autenticação via JWT
+- Demonstrações de segurança ofensiva
+
+**NÃO UTILIZE** este playground em sistemas reais, ambientes de produção ou com tokens de terceiros.  
+O uso indevido pode comprometer seriamente a **autenticidade, integridade e segurança de aplicações** baseadas em JWT.
+
+---
+
+<p><strong>Licença:</strong> Este projeto é licenciado sob CC BY-NC-SA 4.0. Uso comercial proibido. Para fins educacionais apenas.</p>
+
+---
+
+
 Uma aplicação simples para **encode**, **decode** e **edição** de tokens JWT diretamente no navegador
 
 Site: https://5kr1pt.github.io/jwt-playground/
@@ -28,6 +53,8 @@ Contribuições são sempre bem-vindas! Sinta-se livre para abrir issues ou envi
 
 ---
 
-## 📄 License
+## 📄 Licença
 
-Este projeto está licenciado sob a [MIT License](LICENSE).
+Este projeto está licenciado sob a Licença [Creative Commons BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/).  
+Uso comercial é expressamente proibido.
+
